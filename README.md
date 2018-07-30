@@ -26,13 +26,13 @@ There are 2 actors in the system:
 2. The Verifier:
     -  monitors the Truebit contract and challenges incorrect claims.
 
-The address for the contracts as deployed on Rinkeby are in the [`.env`](https://github.com/TrueBitFoundation/scrypt-interactive/blob/master/.env) file.
+The address for the contracts as deployed on Rinkeby are in the [`.env`](https://github.com/dogethereum/scrypt-interactive/blob/master/.env) file.
 
 ## Running the client
 
 The client software is open-source and available in this repo.
 
-Follow [these directions](https://github.com/TrueBitFoundation/scrypt-interactive/blob/master/docs/setup.md) to setup the client.
+Follow [these directions](https://github.com/dogethereum/scrypt-interactive/blob/master/docs/setup.md) to setup the client.
 
 Use the CLI tool to interact with the client:
 
@@ -58,7 +58,7 @@ npm start claim <input> <hash> <proposalID>
 
 ## Running the tests
 
-First, install the needed dependencies as described in the [setup docs](https://github.com/TrueBitFoundation/scrypt-interactive/blob/master/docs/setup.md).
+First, install the needed dependencies as described in the [setup docs](https://github.com/dogethereum/scrypt-interactive/blob/master/docs/setup.md).
 
 Running the tests involves
 1. Running ganache `npm run ganache`
