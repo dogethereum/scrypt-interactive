@@ -8,6 +8,7 @@ More general directions follow:
 ```bash
 # Install the latest stable release of the Parity Ethereum client. 
 # You can look for the binary [here](https://github.com/paritytech/parity/releases).
+# Place the binary in this directory.
 
 # make sure it's executable
 chmod 755 ./parity
@@ -16,15 +17,15 @@ chmod 755 ./parity
 # kill this after the dev db is setup (a few seconds).
 parity --chain dev
 
-# run parity
-npm run parity
-
 # Ensure you have the latest version of node installed (currently v9.4.0).
 
 # Then install npm packages deps:
 npm install
 npm install -g sequelize-cli
 npm install -g truffle
+
+# run parity
+npm run parity
 
 # Install postgres and run it on the default port `5432`:
 sudo apt-get update
