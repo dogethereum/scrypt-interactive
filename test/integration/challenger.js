@@ -105,7 +105,7 @@ describe('Challenger Client Integration Tests', function () {
     }
 
     it('should wait for the challenger to end the game', async () => {
-      await miner.mineBlocks(2)
+      await miner.mineBlocks(5)
     })
 
     it('should have ended verification game', async () => {

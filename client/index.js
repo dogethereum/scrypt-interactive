@@ -53,7 +53,7 @@ module.exports = async (web3, _contracts = null) => {
               )
             `)
 
-            const output = web3.toHex((await contracts.scryptRunner.run.call(claim.input, 2049)[4]))
+            const output = web3.toHex((await contracts.scryptRunner.run.call(claim.input, 2049))[4])
 
             if (output !== claim.hash) {
               cmd.log('Scrypt hash: invalid.')

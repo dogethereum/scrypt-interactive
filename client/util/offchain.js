@@ -20,23 +20,33 @@ const ScryptRunner = resolver.require('ScryptRunner')
 ScryptRunner.setProvider(parityProvider)
 ScryptRunner.defaults({
   from: PARITY_DEV_ADDRESS,
-  gas: 4000000,
+  gas: "800000000",
 })
 
+function deployScryptRunner() {
+  return new Promise((resolve, reject) => {
+    parity.eth.sendTransaction({
+      data: ScryptRunner.bytecode,
+      from: PARITY_DEV_ADDRESS,
+      gas: 5500000,
+    }, (err, txhash) => {
+      if (err) {
+        reject(err);
+      } else {
+        parity.eth.getTransactionReceipt(txhash, (err, receipt) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(ScryptRunner.at(receipt.contractAddress));
+          }
+        });
+      }
+    });
+  });
+}
+
 async function scryptRunner () {
-  await parity.personal.unlockAccount(PARITY_DEV_ADDRESS, '')
-
-  const thisContract = parity.eth.contract(ScryptRunner.abi).new({
-    data: ScryptRunner.bytecode,
-    from: PARITY_DEV_ADDRESS,
-    gas: 5500000,
-  })
-
-  // this forces the script to wait for the contract to actually be deployed
-  // I'm not happy about this being necessary
-  await ScryptRunner.new()
-
-  return thisContract
+  return deployScryptRunner();
 }
 
 module.exports = {
