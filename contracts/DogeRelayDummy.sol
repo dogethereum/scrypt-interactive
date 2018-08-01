@@ -8,12 +8,12 @@ contract DogeRelayDummy is IScryptDependent {
 
 	event ScryptVerified(bytes32 proposalId);
 
-	function DogeRelayDummy(ClaimManager _claimManager) public {
+	constructor(ClaimManager _claimManager) public {
 		claimManager = _claimManager;
 	}
-	
+
 	function scryptVerified(bytes32 proposalId) public returns (uint) {
-		ScryptVerified(proposalId);
+		emit ScryptVerified(proposalId);
 		return 42;
 	}
 

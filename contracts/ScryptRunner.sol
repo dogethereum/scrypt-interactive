@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.24;
 
 import {ScryptFramework} from "./ScryptFramework.sol";
 
@@ -104,7 +104,7 @@ contract ScryptRunner is ScryptFramework {
     {
         require(step <= 2050);
 
-        var (state,) = getStateAndProof(input, step);
+        (bytes memory state,) = getStateAndProof(input, step);
         return keccak256(state);
     }
 
@@ -172,7 +172,7 @@ contract ScryptRunner is ScryptFramework {
             oldValues[2] = fullMem[4 * index + 2];
             oldValues[3] = fullMem[4 * index + 3];
         }
-        var (a, b, c, d) = (values[0], values[1], values[2], values[3]);
+        (uint a, uint b, uint c, uint d) = (values[0], values[1], values[2], values[3]);
         assembly {
             pos := add(pos, 0x20)
             mstore(add(fullMem, pos), a)
@@ -218,7 +218,7 @@ contract ScryptRunner is ScryptFramework {
         // (for writes) or the read value (for reads)
         bytes32[] memory hashes = new bytes32[](1024);
         for (uint i = 0; i < 1024; i++) {
-            hashes[i] = keccak256(fullMem[4 * i + 0], fullMem[4 * i + 1], fullMem[4 * i + 2], fullMem[4 * i + 3]);
+            hashes[i] = keccak256(abi.encodePacked(fullMem[4 * i + 0], fullMem[4 * i + 1], fullMem[4 * i + 2], fullMem[4 * i + 3]));
         }
         uint numHashes = 1024;
         for (uint step = 4; step < proof.length; step++) {
@@ -226,7 +226,7 @@ contract ScryptRunner is ScryptFramework {
             access /= 2;
             numHashes /= 2;
             for (i = 0; i < numHashes; i++) {
-                hashes[i] = keccak256(hashes[2 * i], hashes[2 * i + 1]);
+                hashes[i] = keccak256(abi.encodePacked(hashes[2 * i], hashes[2 * i + 1]));
             }
         }
         assert(numHashes == 1);

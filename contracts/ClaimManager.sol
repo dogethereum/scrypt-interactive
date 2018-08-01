@@ -52,7 +52,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
   }
 
     // @dev – the constructor
-    function ClaimManager(ScryptVerifier _scryptVerifier) public {
+    constructor(ScryptVerifier _scryptVerifier) public {
         scryptVerifier = _scryptVerifier;
     }
 
@@ -69,7 +69,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
     deposits[account] -= amount;
 
     claim.bondedDeposits[account] = claim.bondedDeposits[account].add(amount);
-    DepositBonded(claimID, account, amount);
+    emit DepositBonded(claimID, account, amount);
     return claim.bondedDeposits[account];
   }
 
@@ -94,13 +94,13 @@ contract ClaimManager is DepositsManager, IScryptChecker {
     uint bondedDeposit = claim.bondedDeposits[account];
     delete claim.bondedDeposits[account];
     deposits[account] = deposits[account].add(bondedDeposit);
-    DepositUnbonded(claimID, account, bondedDeposit);
+    emit DepositUnbonded(claimID, account, bondedDeposit);
 
     return bondedDeposit;
   }
 
   function calcId(bytes, bytes32 _hash, address claimant, bytes32 _proposalId) public pure returns (uint) {
-    return uint(keccak256(claimant, _hash, _proposalId));
+    return uint(keccak256(abi.encodePacked(claimant, _hash, _proposalId)));
   }
 
   // @dev – check whether a DogeCoin blockHash was calculated correctly from the plaintext block header.
@@ -108,7 +108,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
   // @param _plaintext – the plaintext blockHeader.
   // @param _blockHash – the blockHash.
   // @param claimant – the address of the Dogecoin block submitter.
-  function checkScrypt(bytes _data, bytes32 _hash, bytes32 _proposalId, IScryptDependent _scryptDependent) public payable {
+  function checkScrypt(bytes _data, bytes32 _hash, bytes32 _proposalId, IScryptDependent _scryptDependent) external payable {
     // dogeRelay can directly make a deposit on behalf of the claimant.
 
     bytes memory _blockHash = new bytes(32);
@@ -127,7 +127,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
 //    uint claimId = numClaims;
 //    uint claimId = uint(keccak256(_submitter, _plaintext, _hash, numClaims));
 
-    uint claimId = uint(keccak256(_submitter, _hash, _proposalId));
+    uint claimId = uint(keccak256(abi.encodePacked(_submitter, _hash, _proposalId)));
     require(!claimExists(claims[claimId]));
 
     ScryptClaim storage claim = claims[claimId];
@@ -143,7 +143,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
     claim.scryptDependent = _scryptDependent;
 
     bondDeposit(claimId, claim.claimant, minDeposit);
-    ClaimCreated(claimId, claim.claimant, claim.plaintext, claim.blockHash);
+    emit ClaimCreated(claimId, claim.claimant, claim.plaintext, claim.blockHash);
   }
 
   // @dev – challenge an existing Scrypt claim.
@@ -164,7 +164,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
     claim.challengeTimeoutBlockNumber = block.number.add(defaultChallengeTimeout);
     claim.challengers.push(msg.sender);
     claim.numChallengers = claim.numChallengers.add(1);
-    ClaimChallenged(claimID, msg.sender);
+    emit ClaimChallenged(claimID, msg.sender);
   }
 
   // @dev – runs a verification game between the claimant and
@@ -184,7 +184,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
       // kick off a verification game.
       uint sessionId = scryptVerifier.claimComputation(claimID, claim.challengers[claim.currentChallenger], claim.claimant, claim.plaintext, claim.blockHash, 2049);
       claim.sessions[claim.challengers[claim.currentChallenger]] = sessionId;
-      VerificationGameStarted(claimID, claim.claimant, claim.challengers[claim.currentChallenger], sessionId);
+      emit VerificationGameStarted(claimID, claim.claimant, claim.challengers[claim.currentChallenger], sessionId);
 
       claim.verificationOngoing = true;
       claim.currentChallenger = claim.currentChallenger.add(1);
@@ -225,7 +225,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
       revert();
     }
 
-    SessionDecided(sessionId, winner, loser);
+    emit SessionDecided(sessionId, winner, loser);
   }
 
   // @dev – check whether a claim has successfully withstood all challenges.
@@ -235,9 +235,9 @@ contract ClaimManager is DepositsManager, IScryptChecker {
   // @param claimID – the claim ID.
   function checkClaimSuccessful(uint claimID) public {
     ScryptClaim storage claim = claims[claimID];
-    
+
     require(claimExists(claim));
-    
+
     // check that there is no ongoing verification game.
     require(claim.verificationOngoing == false);
 
@@ -256,7 +256,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
 
     unbondDeposit(claimID, claim.claimant);
 
-    ClaimSuccessful(claimID, claim.claimant, claim.plaintext, claim.blockHash);
+    emit ClaimSuccessful(claimID, claim.claimant, claim.plaintext, claim.blockHash);
   }
 
   function claimExists(ScryptClaim claim) pure private returns(bool) {
