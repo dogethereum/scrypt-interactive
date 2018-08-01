@@ -3,7 +3,7 @@ const HDWalletProvider = require('truffle-hdwallet-provider')
 const defaultConfig = {
   // eslint-disable-next-line camelcase
   network_id: '*',
-  gas: 5000000,
+  gas: 5500000,
   gasPrice: 4000000000, // gwei
 }
 

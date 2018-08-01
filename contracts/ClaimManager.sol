@@ -23,6 +23,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
   event ClaimChallenged(uint claimID, address challenger);
   event SessionDecided(uint sessionId, address winner, address loser);
   event ClaimSuccessful(uint claimID, address claimant, bytes plaintext, bytes blockHash);
+  event ClaimFailed(uint claimID, address claimant, bytes plaintext, bytes blockHash);
   event VerificationGameStarted(uint claimID, address claimant, address challenger, uint sessionId);//Rename to SessionStarted?
   event ClaimVerificationGamesEnded(uint claimID);
 
@@ -38,6 +39,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
     bool verificationOngoing;   // is the claim waiting for results from an ongoing verificationg game.
     mapping (address => uint) bondedDeposits;   // all deposits bonded in this claim.
     bool decided;
+    bool invalid;
     uint challengeTimeoutBlockNumber;
     bytes32 proposalId;
     IScryptDependent scryptDependent;
@@ -139,11 +141,14 @@ contract ClaimManager is DepositsManager, IScryptChecker {
     claim.verificationOngoing = false;
     claim.createdAt = block.number;
     claim.decided = false;
+    claim.invalid = false;
     claim.proposalId = _proposalId;
     claim.scryptDependent = _scryptDependent;
 
     bondDeposit(claimId, claim.claimant, minDeposit);
     emit ClaimCreated(claimId, claim.claimant, claim.plaintext, claim.blockHash);
+
+    claim.scryptDependent.scryptSubmitted(claim.proposalId, _hash, _data, msg.sender);
   }
 
   // @dev – challenge an existing Scrypt claim.
@@ -216,8 +221,8 @@ contract ClaimManager is DepositsManager, IScryptChecker {
       // because it by default does not save blocks.
 
       //Trigger end of verification game
-      claim.numChallengers = 0;
-      runNextVerificationGame(claimID);
+      claim.currentChallenger = claim.numChallengers;
+      claim.invalid = true;
     } else if (claim.claimant == winner) {
       // the claim continues.
       runNextVerificationGame(claimID);
@@ -252,11 +257,17 @@ contract ClaimManager is DepositsManager, IScryptChecker {
 
     claim.decided = true;
 
-    IScryptDependent(claim.scryptDependent).scryptVerified(claim.proposalId);
+    if (!claim.invalid) {
+        claim.scryptDependent.scryptVerified(claim.proposalId);
 
-    unbondDeposit(claimID, claim.claimant);
+        unbondDeposit(claimID, claim.claimant);
 
-    emit ClaimSuccessful(claimID, claim.claimant, claim.plaintext, claim.blockHash);
+        emit ClaimSuccessful(claimID, claim.claimant, claim.plaintext, claim.blockHash);
+    } else {
+        claim.scryptDependent.scryptFailed(claim.proposalId);
+
+        emit ClaimFailed(claimID, claim.claimant, claim.plaintext, claim.blockHash);
+    }
   }
 
   function claimExists(ScryptClaim claim) pure private returns(bool) {
