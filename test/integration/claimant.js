@@ -103,7 +103,7 @@ describe('Claimant Client Integration Tests', function () {
     })
 
     it('should challenge claim and send initial query', async () => {
-      await timeout(5000)
+      //await timeout(5000)
 
       await miner.mineBlocks(3)
 
