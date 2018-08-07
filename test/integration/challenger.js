@@ -82,7 +82,7 @@ describe('Challenger Client Integration Tests', function () {
         'foobar',
         { from: otherClaimant }
       )
-      await miner.mineBlocks(3)
+      await miner.mineBlocks(5)
     })
 
     for (let i = 0; i < 12; i++) {
@@ -100,7 +100,7 @@ describe('Challenger Client Integration Tests', function () {
         let results = await bridge.api.getResult(session.input, step)
         console.log(`[test] responding to query for session ${sessionId} step ${step} with ${results.stateHash}`)
         await bridge.api.respond(sessionId, step, results.stateHash, { from: otherClaimant })
-        await miner.mineBlocks(3)
+        await miner.mineBlocks(5)
       })
     }
 
