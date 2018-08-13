@@ -103,6 +103,18 @@ const main = async () => {
       )
     })
 
+  program
+    .command('defend')
+    .description('Monitors the Doge-Eth bridge and defend our own claims.')
+    .action(async function (options) {
+      await commands.defend(
+        cmd,
+        bridge,
+        operator,
+        stopper
+      )
+    })
+
   program.parse(process.argv)
 }
 

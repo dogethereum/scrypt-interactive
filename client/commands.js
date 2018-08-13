@@ -77,6 +77,13 @@ const monitor = async (cmd, bridge, operator, autoChallenge = false, stopper) =>
   )
 }
 
+const defend = async (cmd, bridge, operator, stopper) => {
+  await bridge.defendClaims(cmd,
+    operator,
+    stopper
+  )
+}
+
 module.exports = {
   status: doThenExit(status),
   deposit: doThenExit(deposit),
@@ -84,4 +91,5 @@ module.exports = {
   claim: doThenExit(claim),
   resumeClaim: doThenExit(resumeClaim),
   monitor: doThenExit(monitor),
+  defend: doThenExit(defend),
 }

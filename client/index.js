@@ -69,6 +69,7 @@ module.exports = async (web3, _contracts = null) => {
               // this promise also always resolves positively
               // so that Promise.all works correctly
               if (!(claim.id in inProgressClaims)) {
+                cmd.log(`Challenging Claim: ${claim.id}`)
                 inProgressClaims[claim.id] = primitives
                   .challenge(api, claim, challenger)
                   .then(() => {
@@ -106,5 +107,71 @@ module.exports = async (web3, _contracts = null) => {
         }
       })
     },
+    defendClaims: async (cmd, defender, stopper) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          cmd.log('Defending claims...')
+
+          const inProgressClaims = {}
+
+          const claimCreatedEvents = api.claimManager.ClaimCreated()
+          claimCreatedEvents.watch(async (error, result) => {
+            if (error) {
+              console.log(error)
+              return reject(error)
+            }
+
+            const claim = await db.Claim.create({
+              claimID: result.args.claimID.toString(),
+              claimant: result.args.claimant,
+              input: result.args.plaintext,
+              hash: result.args.blockHash,
+              claimCreatedAt: result.blockNumber,
+            })
+
+            cmd.log(`
+              ClaimCreated(
+                id: ${claim.claimID}
+                claimant: ${claim.claimant}
+                plaintext: ${claim.input}
+                blockHash: ${claim.hash}
+                createdAt: ${claim.claimCreatedAt}
+              )
+            `)
+
+            if (claim.claimant === defender) {
+              cmd.log(`Defending Claim: ${claim.id}`)
+              inProgressClaims[claim.id] = primitives
+                .defend(cmd, api, claim)
+                .then(() => {
+                  cmd.log(`Finished Defending Claim: ${claim.id}`)
+                })
+                .catch((err) => {
+                  cmd.log('Bridge Error --------------------------')
+                  cmd.log(`Finished Defending Claim: ${claim.id}`)
+                  cmd.log(err)
+                })
+                .then(() => {
+                  return Promise.resolve()
+                })
+            }
+          })
+
+          // wait for an external stop
+          await stopper
+
+          // stop watching
+          await events.tryStopWatching(claimCreatedEvents, 'ClaimCreated')
+
+          // wait for exisiting claims to finish
+          await Promise.all(Object.values(inProgressClaims))
+
+          // resolve self
+          resolve()
+        } catch (error) {
+          reject(error)
+        }
+      })
+    }
   }
 }
