@@ -9,8 +9,8 @@ module.exports = async (api, claim, sessionID, session, challenger) => {
   // @TODO: postState needs to be session.highHash;
   // provide this in the solidity getter
 
-  // const postState = postStateAndProof.state
-  const postState = claim.hash
+  const postState = postStateAndProof.state
+  // const postState = claim.hash
 
   const proof = postStateAndProof.proof || '0x00'
 

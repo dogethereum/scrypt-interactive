@@ -34,7 +34,7 @@ const submitFirstQuery = async (api, claim, sessionID, challenger) => {
     const lowStep = session.lowStep.toNumber()
     const highStep = session.highStep.toNumber()
     const toQueryStep = calculateMidpoint(lowStep, highStep)
-    console.log(`Challenger: querying step ${toQueryStep}`)
+    console.log(`Challenger: querying first step ${toQueryStep}`)
     await api.query(sessionID, toQueryStep, { from: challenger })
   } else {
     throw new Error('submitFirstQuery: game is not in its first step')

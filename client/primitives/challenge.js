@@ -16,23 +16,32 @@ const queryAfterResponses = async (api, claim, challenger) => {
     sessionId: sessionID, challenger: challenger,
   })
 
-  await new Promise((resolve, reject) => {
-    newResponseEvent.watch(async (err, result) => {
-      if (err) { return reject(err) }
-
-      await submitQuery(api, claim, sessionID, challenger)
-      // check if we are on the final step
-      const session = await getSession(api, sessionID)
-      const lowStep = session.lowStep
-      const highStep = session.highStep
-      if (lowStep.add(1).eq(highStep)) {
-        // if so: trigger final onchain verification
-        await submitFinalStepVerification(api, claim, sessionID, session, challenger)
-        await events.tryStopWatching(newResponseEvent, 'NewResponse')
-        resolve()
-      }
+  try {
+    await new Promise((resolve, reject) => {
+      newResponseEvent.watch(async (err, result) => {
+        if (err) { return reject(err) }
+        try {
+          await submitQuery(api, claim, sessionID, challenger)
+          // check if we are on the final step
+          const session = await getSession(api, sessionID)
+          const lowStep = session.lowStep
+          const highStep = session.highStep
+          if (lowStep.add(1).eq(highStep)) {
+            // if so: trigger final onchain verification
+            await submitFinalStepVerification(api, claim, sessionID, session, challenger)
+            await events.tryStopWatching(newResponseEvent, 'NewResponse')
+            resolve()
+          }
+        } catch (err) {
+          reject(err)
+        }
+      })
     })
-  })
+  } catch (error) {
+    throw error
+  } finally {
+    await events.tryStopWatching(newResponseEvent, 'NewResponse')
+  }
 }
 
 module.exports = async (api, claim, challenger) => {
@@ -43,14 +52,19 @@ module.exports = async (api, claim, challenger) => {
 
   const respondWithQueries = new Promise((resolve, reject) => {
     verificationGameStartedEvent.watch(async (err, event) => {
-      if (err) { return reject(err) }
-      if (event) {
-        await queryAfterResponses(api, claim, challenger)
+      try {
+        if (err) { return reject(err) }
+        if (event) {
+          await queryAfterResponses(api, claim, challenger)
+        }
+      } catch (error) {
+        reject(error)
+      } finally {
+        await events.tryStopWatching(
+          verificationGameStartedEvent,
+          'VerificationGameStarted'
+        )
       }
-      await events.tryStopWatching(
-        verificationGameStartedEvent,
-        'VerificationGameStarted'
-      )
       resolve()
     })
   })
