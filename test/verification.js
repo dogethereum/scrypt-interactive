@@ -55,6 +55,15 @@ const resultExpectations = [
       '0x28b3b2ce855bea481cd966c078c062a715e2897e7c144e15c05dfd52e3bb7cdb',
     ],
   },
+  {
+    steps: 2049,
+    results: [
+      '0x58913d3f84a0eb49aa85ac289d15f972fc6a404a7898a5430f11329d40bcd0f4',
+      '0x3198950346354f4229098d3119cc602759756abd3460bdf4616cc170fa9853b4',
+      '0x6c9179ea013131d768c99a08f58d5640c04c9132794aab4c475ff024521e960',
+      '0xceb2b32848ea5b85c066d91ca762c0787e89e215154e147c52fd5dc0db7cbbe3',
+    ],
+  },
 ]
 
 // eslint-disable-next-line max-len
@@ -100,7 +109,7 @@ describe('ScryptVerifier', function () {
       return verified
     }
 
-    let binarySearchSteps = [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1025, 2048]
+    let binarySearchSteps = [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1025, 2048, 2049]
     for (let step of binarySearchSteps) {
       it(`should be able to prove and verify step ${step}`, async () => {
         (await verifyStep(verifyProveInput, step))
