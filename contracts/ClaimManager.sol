@@ -118,7 +118,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
       mstore(add(_blockHash, 0x20), _hash)
     }
 
-    address _submitter = tx.origin;
+    address _submitter = msg.sender;
     if (msg.value != 0) {
       // only call if eth is included (to save gas)
       increaseDeposit(_submitter, msg.value);
