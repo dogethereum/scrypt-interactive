@@ -187,7 +187,7 @@ contract ClaimManager is DepositsManager, IScryptChecker {
     if (claim.numChallengers > claim.currentChallenger) {
 
       // kick off a verification game.
-      uint sessionId = scryptVerifier.claimComputation(claimID, claim.challengers[claim.currentChallenger], claim.claimant, claim.plaintext, claim.blockHash, 2049);
+      uint sessionId = scryptVerifier.claimComputation(claimID, claim.challengers[claim.currentChallenger], claim.claimant, claim.plaintext, claim.blockHash, 2050);
       claim.sessions[claim.challengers[claim.currentChallenger]] = sessionId;
       emit VerificationGameStarted(claimID, claim.claimant, claim.challengers[claim.currentChallenger], sessionId);
 
