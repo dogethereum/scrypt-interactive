@@ -38,8 +38,9 @@ describe('ClaimManager', function () {
       otherClaimant = web3.eth.accounts[3]
     })
 
-    it('claimant checks scrypt, after implicitly making a deposit', async () => {
-      tx = await dogeRelay.verifyScrypt(serializedBlockHeader, scryptHash, 'bar', { from: claimant, value: claimDeposit })
+    it('claimant checks scrypt', async () => {
+      await claimManager.makeDeposit({ from: claimant, value: claimDeposit })
+      tx = await claimManager.checkScrypt(serializedBlockHeader, scryptHash, 'bar', dogeRelay.address, { from: claimant })
 
       const results = await getAllEvents(claimManager, 'ClaimCreated')
       results.length.should.be.gt(0)
@@ -47,7 +48,7 @@ describe('ClaimManager', function () {
       claimID = results[0].args.claimID /* .toNumber() */
 
       deposit = await claimManager.getBondedDeposit.call(claimID, claimant, { from: claimant })
-      
+
       assert.equal(deposit.toNumber(), claimDeposit)
     })
 
@@ -117,7 +118,7 @@ describe('ClaimManager', function () {
 
     it('waits for timeout of block number when claim is decided', async () => {
       await miner.mineBlocks(6)
-      
+
       const isReady = await claimManager.getClaimReady.call(claimID)
       isReady.should.eq(true)
 
@@ -146,7 +147,8 @@ describe('ClaimManager', function () {
     })
 
     it('claimant makes another claim and is not challenged', async () => {
-      tx = await dogeRelay.verifyScrypt(serializedBlockHeader, scryptHash, 'foobar', { from: claimant, value: claimDeposit })
+      await claimManager.makeDeposit({ from: claimant, value: claimDeposit })
+      tx = await claimManager.checkScrypt(serializedBlockHeader, scryptHash, 'foobar', dogeRelay.address, { from: claimant })
 
       const results = await getAllEvents(claimManager, 'ClaimCreated')
       results.length.should.be.gt(1)
@@ -154,7 +156,7 @@ describe('ClaimManager', function () {
       claimID = results[1].args.claimID // .toNumber()
 
       await miner.mineBlocks(6)
-      
+
       const isReady = await claimManager.getClaimReady.call(claimID)
       isReady.should.eq(true)
 
@@ -166,8 +168,9 @@ describe('ClaimManager', function () {
     })
 
     it('claimant makes two parallel claims', async () => {
-      tx = await dogeRelay.verifyScrypt(serializedBlockHeader, scryptHash, 'foobar1', { from: claimant, value: claimDeposit })
-      tx = await dogeRelay.verifyScrypt(serializedBlockHeader, scryptHash, 'foobar2', { from: claimant, value: claimDeposit })
+      await claimManager.makeDeposit({ from: claimant, value: 2 * claimDeposit })
+      tx = await claimManager.checkScrypt(serializedBlockHeader, scryptHash, 'foobar1', dogeRelay.address, { from: claimant })
+      tx = await claimManager.checkScrypt(serializedBlockHeader, scryptHash, 'foobar2', dogeRelay.address, { from: claimant })
 
       const results = await getAllEvents(claimManager, 'ClaimCreated')
       results.length.should.be.gt(3)

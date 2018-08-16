@@ -56,7 +56,7 @@ module.exports = async (web3, _contracts = null) => {
             const output = web3.toHex((await contracts.scryptRunner.run.call(claim.input, 2049))[4])
 
             if (output !== claim.hash) {
-              cmd.log('Scrypt hash: invalid.')
+              cmd.log(`Scrypt hash: invalid\n\nExpected: ${output}\nActual: ${claim.hash}`)
 
               if (!autoChallenge) {
                 cmd.log('...but not configured to challenge, ignoring.')
@@ -85,7 +85,7 @@ module.exports = async (web3, _contracts = null) => {
                   })
               }
             } else {
-              cmd.log('Scrypt hash: valid')
+              cmd.log(`Scrypt hash: valid\nHash: ${claim.hash}`)
             }
           })
 

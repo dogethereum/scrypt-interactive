@@ -50,7 +50,10 @@ module.exports = async ({ claimManager, scryptVerifier, scryptRunner, dogeRelay 
      * This is only used for testing
      */
     createClaim: async (...args) => {
-      return dogeRelay.verifyScrypt(...args)
+      let newArgs = args.slice(0, 3)
+      newArgs.push(dogeRelay.address)
+      newArgs.push(args[3])
+      return claimManager.checkScrypt(...newArgs)
     },
     /**
      * @return BigNumber number of blocks that represent challenge timeout
