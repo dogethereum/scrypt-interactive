@@ -17,7 +17,8 @@ contract Verifier {
     event ChallengerConvicted(uint sessionId, address challenger);
     event ClaimantConvicted(uint sessionId, address claimant);
 
-    uint constant responseTime = 1 hours;
+    //uint constant responseTime = 1 hours;
+    uint constant responseTime = 10 seconds;
 
     struct VerificationSession {
         uint id;
@@ -171,13 +172,13 @@ contract Verifier {
         bytes proofs,
         ClaimManager claimManager
     )
-        //onlyClaimant(sessionId)
+        onlyClaimant(sessionId)
         public
     {
         VerificationSession storage s = sessions[sessionId];
         require(s.lowStep + 1 == s.highStep);
         // ^ must be at the end of the binary search according to the smart contract
-        
+
         require(claimID == sessionsClaimId[sessionId]);
 
         //prove game ended

@@ -9,6 +9,7 @@ web3.eth.defaultAccount = web3.eth.accounts[0]
 const miner = require('../helpers/miner')(web3)
 const getAllEvents = require('../helpers/events').getAllEvents
 const getContracts = require('../../client/util/getContracts')
+const timeout = require('../../client/util/timeout')
 
 const {
   serializedBlockHeader,
@@ -100,12 +101,12 @@ describe('Challenger Client Integration Tests', function () {
         let results = await bridge.api.getResult(session.input, step)
         console.log(`[test] responding to query for session ${sessionId} step ${step} with ${results.stateHash}`)
         await bridge.api.respond(sessionId, step, results.stateHash, { from: otherClaimant })
-        await miner.mineBlocks(5)
+        await timeout(3000)
       })
     }
 
     it('should wait for the challenger to end the game', async () => {
-      await miner.mineBlocks(5)
+      await timeout(15000)
     })
 
     it('should have ended verification game', async () => {

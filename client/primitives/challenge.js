@@ -9,12 +9,65 @@ const submitQuery = require('./query').submitQuery
 const submitFirstQuery = require('./query').submitFirstQuery
 const triggerVerificationGame = require('./triggerVerificationGame')
 const submitFinalStepVerification = require('./submitFinalStepVerification')
+const timeout = require('../util/timeout')
+
+const responseTime = 10
 
 const queryAfterResponses = async (api, claim, challenger) => {
   const sessionID = await getSessionID(api, claim, challenger)
   const newResponseEvent = api.scryptVerifier.NewResponse({
     sessionId: sessionID, challenger: challenger,
   })
+  const challengeResolution = () => {
+    return Promise.race([
+      new Promise(async (resolve, reject) => {
+        try {
+          // Make sure we are waiting for challenger to timeout
+          let [lastClaimantMessage, lastChallengerMessage] = await api.scryptVerifier.getLastSteps(sessionID)
+          if (lastClaimantMessage < lastChallengerMessage) {
+            let ready = false
+            while (!ready) {
+              let elapsed = Date.now() - new Date(lastChallengerMessage * 1000)
+              // Wait a little longer than responseTime (10% more)
+              if (elapsed <= responseTime * 1000 * 1.1) {
+                await timeout(responseTime * 1000 * 1.1 - elapsed)
+              } else {
+                ready = true
+                break
+              }
+            }
+            // Request challenger timeout
+            await api.scryptVerifier.timeout(sessionID, claim.claimID, api.claimManager.address, { from: challenger })
+          } else {
+            console.log(`Something is wrong\nclaimant: ${lastClaimantMessage}, challenger: ${lastChallengerMessage}`)
+            reject(new Error('Invalid state'))
+          }
+          resolve()
+        } catch (err) {
+          console.log(`${err}`)
+          reject(err)
+        }
+      }).then(() => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            // Wait until the challenge is over
+            let ready = false
+            while (!ready) {
+              ready = await api.claimManager.getClaimReady(claim.claimID)
+              if (!ready) {
+                await timeout(2000)
+              }
+            }
+            await api.claimManager.checkClaimSuccessful(claim.claimID, { from: challenger })
+            resolve()
+          } catch (err) {
+            console.log(`${err}`)
+            reject(err)
+          }
+        })
+      }),
+    ])
+  }
 
   try {
     await new Promise((resolve, reject) => {
@@ -28,7 +81,8 @@ const queryAfterResponses = async (api, claim, challenger) => {
           const highStep = session.highStep
           if (lowStep.add(1).eq(highStep)) {
             // if so: trigger final onchain verification
-            await submitFinalStepVerification(api, claim, sessionID, session, challenger)
+            // await submitFinalStepVerification(api, claim, sessionID, session, challenger)
+            await challengeResolution()
             await events.tryStopWatching(newResponseEvent, 'NewResponse')
             resolve()
           }
