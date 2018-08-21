@@ -18,29 +18,30 @@ const queryAfterResponses = async (api, claim, challenger) => {
   const newResponseEvent = api.scryptVerifier.NewResponse({
     sessionId: sessionID, challenger: challenger,
   })
+  const challengerConvictedEvent = api.scryptVerifier.ChallengerConvicted({
+    sessionId: sessionID, challenger: challenger,
+  })
   const challengeResolution = () => {
     return Promise.race([
       new Promise(async (resolve, reject) => {
         try {
           // Make sure we are waiting for challenger to timeout
           let [lastClaimantMessage, lastChallengerMessage] = await api.scryptVerifier.getLastSteps(sessionID)
-          if (lastClaimantMessage < lastChallengerMessage) {
-            let ready = false
-            while (!ready) {
-              let elapsed = Date.now() - new Date(lastChallengerMessage * 1000)
-              // Wait a little longer than responseTime (10% more)
-              if (elapsed <= responseTime * 1000 * 1.1) {
-                await timeout(responseTime * 1000 * 1.1 - elapsed)
-              } else {
-                ready = true
-                break
-              }
+          while (lastClaimantMessage < lastChallengerMessage) {
+            let elapsed = Date.now() - new Date(lastChallengerMessage * 1000)
+            // Wait a little longer than responseTime (10% more)
+            if (elapsed <= responseTime * 1000 * 1.1) {
+              await timeout(responseTime * 1000 * 1.1 - elapsed)
+            } else {
+              break
             }
+            [lastClaimantMessage, lastChallengerMessage] = await api.scryptVerifier.getLastSteps(sessionID)
+          }
+          if (lastClaimantMessage < lastChallengerMessage) {
             // Request challenger timeout
             await api.scryptVerifier.timeout(sessionID, claim.claimID, api.claimManager.address, { from: challenger })
           } else {
-            console.log(`Something is wrong\nclaimant: ${lastClaimantMessage}, challenger: ${lastChallengerMessage}`)
-            reject(new Error('Invalid state'))
+            reject(new Error('Session already decided'))
           }
           resolve()
         } catch (err) {
@@ -66,6 +67,13 @@ const queryAfterResponses = async (api, claim, challenger) => {
           }
         })
       }),
+      new Promise((resolve, reject) => {
+        challengerConvictedEvent.watch((err, result) => {
+          console.log('We lost the game :(')
+          if (err) { return reject(err) }
+          resolve(result)
+        })
+      }),
     ])
   }
 
@@ -83,7 +91,6 @@ const queryAfterResponses = async (api, claim, challenger) => {
             // if so: trigger final onchain verification
             // await submitFinalStepVerification(api, claim, sessionID, session, challenger)
             await challengeResolution()
-            await events.tryStopWatching(newResponseEvent, 'NewResponse')
             resolve()
           }
         } catch (err) {
@@ -94,6 +101,7 @@ const queryAfterResponses = async (api, claim, challenger) => {
   } catch (error) {
     throw error
   } finally {
+    await events.tryStopWatching(challengerConvictedEvent, 'ChallengerConvicted')
     await events.tryStopWatching(newResponseEvent, 'NewResponse')
   }
 }
