@@ -335,4 +335,10 @@ contract ClaimManager is DepositsManager, IScryptChecker {
 
     return exists && pastChallengeTimeout && pastClaimTimeout && noOngoingGames && noPendingGames;
   }
+
+  function getClaimStatus(uint claimID) public view returns(bool, bool) {
+    bool decided = claims[claimID].decided;
+    bool invalid = claims[claimID].invalid;
+    return (decided, invalid);
+  }
 }

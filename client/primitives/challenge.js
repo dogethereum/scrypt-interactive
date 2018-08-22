@@ -37,40 +37,74 @@ const queryAfterResponses = async (api, claim, challenger) => {
             }
             [lastClaimantMessage, lastChallengerMessage] = await api.scryptVerifier.getLastSteps(sessionID)
           }
-          if (lastClaimantMessage < lastChallengerMessage) {
-            // Request challenger timeout
-            await api.scryptVerifier.timeout(sessionID, claim.claimID, api.claimManager.address, { from: challenger })
-          } else {
+          let [decided, invalid] = await api.claimManager.getClaimStatus(claim.claimID)
+          let tries = 0
+          while (!decided && tries < 3) {
+            try {
+              // Request challenger timeout
+              await api.scryptVerifier.timeout(sessionID, claim.claimID, api.claimManager.address, { from: challenger })
+              break
+            } catch (err) {
+              if (tries < 2) {
+                await timeout(500)
+              } else {
+                reject(err)
+                return
+              }
+            }
+            tries += 1
+            [decided, invalid] = await api.claimManager.getClaimStatus(claim.claimID)
+          }
+
+          if (decided) {
+            if (invalid) {
+              // We won!
+              resolve()
+              return
+            } else {
+              // We failed!
+              reject(new Error('Session already decided'))
+              return
+            }
+          }
+
+          // Wait until the challenge is over
+          let ready = false
+          while (!ready) {
+            ready = await api.claimManager.getClaimReady(claim.claimID)
+            if (!ready) {
+              await timeout(2000)
+            }
+          }
+
+          try {
+            await api.claimManager.checkClaimSuccessful(claim.claimID, { from: challenger })
+          } catch (err) {
+            [decided, invalid] = await api.claimManager.getClaimStatus(claim.claimID)
+            if (decided && !invalid) {
+              // We lost
+              reject(new Error('Session already decided'))
+              return
+            }
+          }
+          [decided, invalid] = await api.claimManager.getClaimStatus(claim.claimID)
+          if (decided && !invalid) {
+            // We lost
             reject(new Error('Session already decided'))
+            return
           }
           resolve()
         } catch (err) {
           console.log(`${err}`)
           reject(err)
         }
-      }).then(() => {
-        return new Promise(async (resolve, reject) => {
-          try {
-            // Wait until the challenge is over
-            let ready = false
-            while (!ready) {
-              ready = await api.claimManager.getClaimReady(claim.claimID)
-              if (!ready) {
-                await timeout(2000)
-              }
-            }
-            await api.claimManager.checkClaimSuccessful(claim.claimID, { from: challenger })
-            resolve()
-          } catch (err) {
-            console.log(`${err}`)
-            reject(err)
-          }
-        })
       }),
       new Promise((resolve, reject) => {
         challengerConvictedEvent.watch((err, result) => {
           console.log('We lost the game :(')
-          if (err) { return reject(err) }
+          if (err) {
+            return reject(err)
+          }
           resolve(result)
         })
       }),

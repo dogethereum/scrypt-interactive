@@ -34,9 +34,22 @@ module.exports = async (cmd, api, claim) => {
             ready = await api.claimManager.getClaimReady(claim.claimID)
           }
           await api.claimManager.checkClaimSuccessful(claim.claimID, { from: claim.claimant })
+          let [decided, invalid] = await api.claimManager.getClaimStatus(claim.claimID)
+          if (decided && invalid) {
+            // We lost
+            reject(new Error('Session already decided'))
+            return
+          }
           cmd.log('The claim was successful!')
           resolve()
         } catch (error) {
+          let [decided, invalid] = await api.claimManager.getClaimStatus(claim.claimID)
+          if (decided && !invalid) {
+            // We won!
+            cmd.log('The claim was successful!')
+            resolve()
+            return
+          }
           cmd.log('Error while resolving defense. The claim didn\'t end in the state we expected.')
           return reject(error)
         }
