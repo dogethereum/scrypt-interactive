@@ -50,30 +50,43 @@ These environment variables are required and need to be keep updated
 
 Provider connected to the network:
 ```bash
-set WEB3_HTTP_PROVIDER=http://localhost:8545
+WEB3_HTTP_PROVIDER=http://localhost:8545
+export WEB3_HTTP_PROVIDER
 ```
 
 Parity's provider (required for offchain computations):
 ```bash
-set WEB3_PARITY_PROVIDER=http://localhost:4242
+WEB3_PARITY_PROVIDER=http://localhost:4242
+export WEB3_PARITY_PROVIDER
 ```
 
 Deployed contract addresses:
 ```bash
-set SCRYPT_VERIFIER_ADDRESS=0x51799b119e53b2c8cd13b8a08c3a1b5e9c64ff9d
-set CLAIM_MANAGER_ADDRESS=0x243536a9bfa1ffd72a4dab85485bb665aa6c4b78
-set DOGE_RELAY_ADDRESS=0x684f1a2a551ff65d007310abe48b1f7e9b54b94c
-set SCRYPT_RUNNER_ADDRESS=0xf7c0844698fa6218305cea54adcefa77165a56f5
+SCRYPT_VERIFIER_ADDRESS=0x51799b119e53b2c8cd13b8a08c3a1b5e9c64ff9d
+CLAIM_MANAGER_ADDRESS=0x243536a9bfa1ffd72a4dab85485bb665aa6c4b78
+DOGE_RELAY_ADDRESS=0x684f1a2a551ff65d007310abe48b1f7e9b54b94c
+SCRYPT_RUNNER_ADDRESS=0xf7c0844698fa6218305cea54adcefa77165a56f5
+export SCRYPT_VERIFIER_ADDRESS
+export CLAIM_MANAGER_ADDRESS
+export DOGE_RELAY_ADDRESS
+export SCRYPT_RUNNER_ADDRESS
 ```
 
 These addresses are displayed by the migration script on deployment.
 
 Operator address, monitors will use this address to send transactions:
 ```bash
-set OPERATOR_ADDRESS=0x5745cf9ea9710f7c65254c1e2605eeff403b474c
+OPERATOR_ADDRESS=0x5745cf9ea9710f7c65254c1e2605eeff403b474c
+export OPERATOR_ADDRESS
 ```
 
 ### Launch
+
+To show deposit status of the operator and check if the setup is working
+
+```bash
+node cli.js status
+```
 
 You have to make a deposit of ether in the contract:
 ```bash
