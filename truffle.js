@@ -33,6 +33,11 @@ module.exports = {
       port: 8545,
       ...defaultConfig,
     },
+    rinkeby: {
+      host: '127.0.0.1',
+      port: 8545,
+      ...defaultConfig,
+    },
     parity: {
       host: 'localhost',
       port: 4242,
