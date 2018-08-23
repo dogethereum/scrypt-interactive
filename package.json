@@ -21,7 +21,7 @@
   },
   "betterScripts": {
     "ganache": "./bin/ganache.sh",
-    "parity": "parity --config config.toml --geth",
+    "parity": "./parity --config config.toml --geth",
     "geth": "geth --dev --dev.period 0 --rpc --targetgaslimit 8000000",
     "migrate:dev": "truffle migrate --network ganache",
     "migrate:rinkeby": {
