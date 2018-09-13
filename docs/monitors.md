@@ -20,7 +20,7 @@ It is better if they run in separate consoles so the variables do not overlap.
 *   Deploy contracts:
 
     ```bash
-    truffle.cmd migrate --network rinkeby --reset
+    truffle migrate --network rinkeby --reset
     ```
 
     It should output the address of deployed contracts:
